@@ -1,0 +1,38 @@
+'use strict';
+// Prueba de lógica (sin Electron): licencias, ventas, cierre de caja, permisos de admin.
+const assert = require('assert'); const os = require('os'); const path = require('path'); const fs = require('fs');
+const L = require('../src/license'); const { Store } = require('../src/db'); const { createApi } = require('../src/api');
+const secret = 'test-secret';
+const id = L.getMachineId(); assert(/^KSC-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(id), 'formato ID');
+const key = L.generateKey(id, secret);
+assert(/^[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$/.test(key));
+assert(L.verifyKey(id, key.toLowerCase().replace(/-/g, ' '), secret), 'clave válida (normalizada)');
+assert(!L.verifyKey('KSC-AAAA-BBBB', key, secret), 'clave de otra PC');
+assert(!L.verifyKey(id, key, 'otro-secreto'), 'otro secreto');
+
+const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vf-')), 'd.json');
+const api = createApi(new Store(f), { machineId: id, isActivated: () => true, activate: () => true });
+const call = (c, a) => api.handle(c, a);
+const prods = call('products:list'); assert(prods.length > 30 && prods[0].cost === undefined, 'cajero no ve costos');
+assert.throws(() => call('sales:list'), /Admin/); assert.throws(() => call('products:save', { name: 'x', price: 1 }), /Admin/);
+const coca = prods.find(p => p.name === 'Coca-Cola 500ml'); const before = coca.stock;
+const s = call('sale:create', { items: [{ pid: coca.id, qty: 2, price: 1 }, { pid: null, name: 'Varios', qty: 1, price: 500 }], method: 'cash', paid: 5000 });
+assert.strictEqual(s.total, 2 * coca.price + 500, 'precio de catálogo, no el enviado'); assert.strictEqual(s.change, 5000 - s.total);
+assert.throws(() => call('sale:create', { items: [{ pid: coca.id, qty: 1 }], method: 'cash', paid: 10 }), /menor/);
+assert.strictEqual(call('products:list').find(p => p.id === coca.id).stock, before - 2, 'descuenta stock');
+call('sale:create', { items: [{ pid: coca.id, qty: 1 }], method: 'mp' });
+const sum = call('shift:summary'); assert.strictEqual(sum.count, 2); assert.strictEqual(sum.cash, s.total);
+const c = call('shift:close', { openingFloat: 1000, counted: 1000 + s.total, note: '' }); assert.strictEqual(c.status, 'perfect');
+assert.strictEqual(call('shift:summary').count, 0, 'caja lista para el próximo turno');
+assert.strictEqual(call('shift:close', { openingFloat: 100, counted: 5 }).status, 'short');
+assert(!call('admin:login', '0000').ok); assert(call('admin:login', '1234').ok);
+const price = call('products:list').find(p => p.id === coca.id).price;
+call('products:bulkPrice', { category: 'Bebidas', percent: 10, roundTo: 10 });
+assert.strictEqual(call('products:list').find(p => p.id === coca.id).price, Math.round(price * 1.1 / 10) * 10);
+call('products:save', { name: 'Nuevo', price: 100, cost: 50, stock: 3, minStock: 5 });
+assert(call('products:list').some(p => /^KSC\d+/.test(p.code) && p.name === 'Nuevo'), 'código autogenerado');
+assert.throws(() => call('products:save', { name: 'Dup', price: 1, code: coca.code }), /código/);
+call('settings:save', { currentPin: '1234', newPin: '5555' }); call('admin:lock');
+assert(!call('admin:login', '1234').ok); assert(call('admin:login', '5555').ok);
+assert(new Store(f).data.sales.length > 100, 'persistencia');
+console.log('OK - todas las pruebas pasaron. ID de esta PC:', id);

@@ -1,0 +1,4 @@
+node_modules/
+dist/
+src/license-secret.js
+*.log

@@ -1,0 +1,22 @@
+name: Build Windows installer
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - name: Secreto de licencias (GitHub Secret LICENSE_SECRET)
+        shell: bash
+        env: { LICENSE_SECRET: '${{ secrets.LICENSE_SECRET }}' }
+        run: |
+          if [ -z "$LICENSE_SECRET" ]; then echo "Falta el secret LICENSE_SECRET"; exit 1; fi
+          node tools/gen-secret.js
+      - run: npx electron-builder --win nsis --x64
+      - uses: actions/upload-artifact@v4
+        with: { name: Vendify-Kiosco-Setup, path: dist/*.exe }

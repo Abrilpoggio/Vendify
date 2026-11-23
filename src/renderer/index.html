@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:">
+<title>Vendify Kiosco</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+<div id="license" class="hidden"></div>
+<div id="app" class="hidden">
+  <header>
+    <div class="brand">🏪 <span id="shopName">Vendify</span></div>
+    <div class="clock" id="clock"></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnTheme" title="Cambiar tema">🌓 Tema</button>
+    <button class="btn warn" id="btnClose">🧾 Cerrar Caja / Fin de Turno</button>
+    <button class="btn" id="btnAdmin">🔒 Modo Admin</button>
+  </header>
+
+  <main id="posView">
+    <section class="left">
+      <div class="searchbar">
+        <input id="search" placeholder="🔎 Buscar por nombre, código o categoría… (F1)" autocomplete="off">
+        <button class="btn primary" id="btnCam">📷 Escanear con cámara</button>
+      </div>
+      <h3>Acceso rápido</h3>
+      <div id="quick" class="quick"></div>
+      <h3 id="resultsTitle">Productos</h3>
+      <div id="results" class="results"></div>
+    </section>
+    <aside class="right">
+      <div class="cart-head"><h2>Ticket</h2><button class="btn small" id="btnClear">🗑 Vaciar (Supr)</button></div>
+      <div id="cart" class="cart"></div>
+      <div class="totalbox"><span>TOTAL</span><strong id="total">$ 0</strong></div>
+      <div class="pay">
+        <button class="pay-btn cash" data-pay="cash">💵 Efectivo<small>F2</small></button>
+        <button class="pay-btn mp" data-pay="mp">📱 Mercado Pago / QR<small>F3</small></button>
+        <button class="pay-btn card" data-pay="card">💳 Transferencia / Tarjeta<small>F4</small></button>
+      </div>
+    </aside>
+  </main>
+
+  <main id="adminView" class="hidden">
+    <nav class="tabs" id="adminTabs">
+      <button data-tab="stats" class="active">📊 Estadísticas</button>
+      <button data-tab="products">📦 Productos y Stock</button>
+      <button data-tab="sales">🧾 Historial de ventas</button>
+      <button data-tab="closures">🗂 Cierres de caja</button>
+      <button data-tab="settings">⚙️ Configuración</button>
+    </nav>
+    <div id="adminBody"></div>
+  </main>
+</div>
+<div id="modalRoot"></div>
+<div id="toasts"></div>
+<script src="vendor/zxing.min.js"></script>
+<script src="app.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

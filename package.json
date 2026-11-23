@@ -1,0 +1,39 @@
+{
+  "name": "vendify-kiosco",
+  "productName": "Vendify Kiosco",
+  "version": "1.0.0",
+  "description": "Punto de Venta y Gestión para Kioscos (offline)",
+  "main": "src/main.js",
+  "author": "Vendify",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node tools/selftest.js",
+    "gen-secret": "node tools/gen-secret.js",
+    "keygen": "node tools/keygen.js",
+    "dist": "node tools/gen-secret.js --if-missing && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "@zxing/library": "^0.21.3"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.vendify.kiosco",
+    "productName": "Vendify Kiosco",
+    "asar": true,
+    "files": ["src/**/*", "package.json"],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "artifactName": "Vendify-Kiosco-Setup-${version}.exe"
+  }
+}
