@@ -71,7 +71,8 @@ async function boot() {
     <div class="mid">${esc(st.machineId)}</div>
     <input id="licKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" maxlength="19" autofocus>
     <div class="err-t" id="licErr"></div>
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="licBtn" style="width:100%;font-size:20px">Activar</button></div></div>`;
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="licBtn" style="width:100%;font-size:20px">Activar</button></div>
+    <div class="credit">Creado por <a href="https://abrilpoggio.github.io/TheWebLab/" target="_blank" rel="noopener">Abril Poggio · TheWebLab</a></div></div>`;
   const go = async () => {
     try { const r = await call('license:activate', $('#licKey').value); if (r.ok) { box.classList.add('hidden'); startApp(); } else $('#licErr').textContent = 'Clave incorrecta para este equipo.'; }
     catch (e) { $('#licErr').textContent = e.message; }

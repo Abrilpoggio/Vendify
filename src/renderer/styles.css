@@ -89,3 +89,6 @@ tr.rowlow td{background:rgba(255,176,32,.08)}tr.rowout td{background:rgba(255,93
 .mid{font-size:44px;font-weight:900;letter-spacing:.06em;background:var(--panel2);border-radius:12px;padding:14px;margin:14px 0;user-select:all}
 #license input{width:100%;font-size:24px;text-align:center;letter-spacing:.1em;text-transform:uppercase}
 .err-t{color:var(--bad);font-weight:700;min-height:24px;margin-top:8px}
+footer.credit{text-align:center;padding:5px;font-size:13px;color:var(--muted);background:var(--panel);border-top:1px solid var(--line)}
+footer.credit a{color:var(--accent);font-weight:700;text-decoration:none}
+#license .credit{margin-top:18px;font-size:13px;color:var(--muted)}#license .credit a{color:var(--accent);font-weight:700;text-decoration:none}
