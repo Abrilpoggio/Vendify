@@ -33,7 +33,7 @@ function createLicense() {
 function createWindow() {
   win = new BrowserWindow({
     width: 1366, height: 820, minWidth: 1024, minHeight: 650, backgroundColor: '#0f1115',
-    title: 'Vendify Kiosco', autoHideMenuBar: true,
+    title: 'Vendify', icon: path.join(__dirname, 'assets', 'icon.png'), autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));

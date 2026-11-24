@@ -24,12 +24,14 @@ function rangeStart(r) {
 function setupCanvas(c) {
   const dpr = window.devicePixelRatio || 1; const w = c.clientWidth, h = c.clientHeight;
   c.width = w * dpr; c.height = h * dpr; const g = c.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
-  g.font = '12px Segoe UI, sans-serif'; return { g, w, h };
+  g.font = '12px Jakarta, Segoe UI, sans-serif'; return { g, w, h };
 }
 function drawBars(canvas, labels, values, color, fmt = money, minMax = 1) {
-  const { g, w, h } = setupCanvas(canvas); const L = 54, B = 24, T = 14; const max = Math.max(...values, minMax);
+  const { g, w, h } = setupCanvas(canvas); const L = 50, B = 24, T = 14; const raw = Math.max(...values, minMax);
+  const pw = Math.pow(10, Math.floor(Math.log10(raw))); const max = [1, 2, 2.5, 5, 10].map(m => m * pw).find(v => v >= raw);
+  const short = v => fmt === money ? (v >= 1e6 ? '$' + +(v / 1e6).toFixed(1) + 'M' : v >= 1000 ? '$' + +(v / 1000).toFixed(1) + 'k' : '$' + Math.round(v)) : fmt(v);
   g.strokeStyle = cssv('--line'); g.fillStyle = cssv('--muted'); g.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) { const y = T + (h - T - B) * (1 - i / 4); g.beginPath(); g.moveTo(L, y); g.lineTo(w, y); g.stroke(); g.fillText(fmt(max * i / 4).replace('$ ', '$'), L - 6, y + 4); }
+  for (let i = 0; i <= 4; i++) { const y = T + (h - T - B) * (1 - i / 4); g.beginPath(); g.moveTo(L, y); g.lineTo(w, y); g.stroke(); g.fillText(short(max * i / 4), L - 6, y + 4); }
   const bw = (w - L) / values.length; g.textAlign = 'center';
   values.forEach((v, i) => {
     const bh = (h - T - B) * v / max; g.fillStyle = color; g.fillRect(L + i * bw + bw * 0.15, h - B - bh, bw * 0.7, bh);
@@ -42,7 +44,7 @@ function drawDonut(canvas, parts) {
   if (!tot) { g.fillStyle = cssv('--muted'); g.textAlign = 'center'; g.fillText('Sin datos', cx, cy); return; }
   parts.forEach(p => { const a = p.v / tot * Math.PI * 2; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r, a0, a0 + a); g.closePath(); g.fillStyle = p.c; g.fill(); a0 += a; });
   g.beginPath(); g.arc(cx, cy, r * 0.55, 0, Math.PI * 2); g.fillStyle = cssv('--panel'); g.fill();
-  g.fillStyle = cssv('--text'); g.textAlign = 'center'; g.font = 'bold 15px Segoe UI'; g.fillText(money(tot), cx, cy + 5);
+  g.fillStyle = cssv('--text'); g.textAlign = 'center'; g.font = 'bold 15px Jakarta, Segoe UI, sans-serif'; g.fillText(money(tot), cx, cy + 5);
 }
 async function tabStats() {
   const body = $('#adminBody'); const all = await call('sales:list');

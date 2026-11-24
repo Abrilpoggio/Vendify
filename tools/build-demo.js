@@ -3,7 +3,7 @@
 // Reutiliza el código real (db.js, api.js, app.js, admin.js). Uso: node tools/build-demo.js salida.html
 const fs = require('fs'); const path = require('path');
 const R = f => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
-const font = 'data:font/woff2;base64,' + fs.readFileSync(path.join(__dirname, '..', 'src/renderer/vendor/fredoka.woff2')).toString('base64');
+const font = 'data:font/woff2;base64,' + fs.readFileSync(path.join(__dirname, '..', 'src/renderer/vendor/jakarta.woff2')).toString('base64');
 const safe = s => s.replace(/<\/script/gi, '<\\/script');
 const out = process.argv[2] || path.join(__dirname, '..', 'dist', 'demo.html');
 
@@ -43,7 +43,7 @@ const shim = `
 const wrap = (n, code) => `__def(${JSON.stringify(n)}, function(module, exports, require){\n${code}\n});`;
 let html = R('renderer/index.html')
   .replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '')
-  .replace('<link rel="stylesheet" href="styles.css">', `<style>${R('renderer/styles.css').replace('vendor/fredoka.woff2', font)}</style>`)
+  .replace('<link rel="stylesheet" href="styles.css">', `<style>${R('renderer/styles.css').replace('vendor/jakarta.woff2', font)}</style>`)
   .replace(/<script src="vendor\/zxing.min.js"><\/script>\s*<script src="app.js"><\/script>\s*<script src="admin.js"><\/script>/, () =>
     `<div style="position:fixed;top:0;left:0;right:0;background:#ffb020;color:#000;text-align:center;font:600 12px sans-serif;padding:2px;z-index:200">DEMO en navegador — los datos se guardan solo en esta página. La cámara, la licencia y el .exe real funcionan solo en la app instalada.</div>
 <script>${safe(shim)}${safe(wrap('db', R('db.js')))}${safe(wrap('api', R('api.js')))}__boot();</script>

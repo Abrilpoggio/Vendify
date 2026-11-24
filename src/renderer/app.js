@@ -61,12 +61,14 @@ const confirmModal = (title, text, ok = 'Confirmar') => new Promise(res => {
 /* ===== Estado ===== */
 const S = { products: [], cart: [], admin: false, adminTab: 'stats' };
 
+const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-label="Vendify"><rect width="64" height="64" rx="16" fill="#6a47f5"/><path d="M17 21 L32 46" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M32 46 L47 21" fill="none" stroke="#19D3A2" stroke-width="8" stroke-linecap="round"/><circle cx="47" cy="17" r="6" fill="#FF6A3D" stroke="#6a47f5" stroke-width="3"/></svg>';
+
 /* ===== Licencia ===== */
 async function boot() {
   const st = await call('license:status');
   if (st.activated) return startApp();
   const box = $('#license'); box.classList.remove('hidden');
-  box.innerHTML = `<div class="box"><h1>🔐 Activar Vendify Kiosco</h1>
+  box.innerHTML = `<div class="box"><div class="logo">${LOGO}<span class="wm">vend<b>ify</b></span></div><h2 style="margin:18px 0 0">Activar el programa</h2>
     <p>Pasale este <b>ID de Máquina</b> a tu proveedor para recibir la clave de activación:</p>
     <div class="mid">${esc(st.machineId)}</div>
     <input id="licKey" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" maxlength="19" autofocus>
@@ -91,9 +93,9 @@ async function startApp() {
 async function loadProducts() { S.products = await call('products:list'); renderQuick(); }
 
 /* ===== Tema ===== */
-const THEMES = ['theme-fun', 'theme-dark', 'theme-contrast', 'theme-light'];
-function applyTheme(t) { document.body.classList.remove(...THEMES); document.body.classList.add(t); localStorage.setItem('theme2', t); if (S.admin) renderAdmin(); }
-applyTheme(THEMES.includes(localStorage.getItem('theme2')) ? localStorage.getItem('theme2') : 'theme-fun');
+const THEMES = ['theme-vendify', 'theme-light', 'theme-contrast'];
+function applyTheme(t) { document.body.classList.remove(...THEMES); document.body.classList.add(t); localStorage.setItem('theme3', t); if (S.admin) renderAdmin(); }
+applyTheme(THEMES.includes(localStorage.getItem('theme3')) ? localStorage.getItem('theme3') : 'theme-vendify');
 $('#btnTheme').addEventListener('click', () => { const cur = THEMES.findIndex(t => document.body.classList.contains(t)); applyTheme(THEMES[(cur + 1) % THEMES.length]); });
 
 /* ===== Emojis y confetti (tema divertido) ===== */
@@ -104,7 +106,7 @@ const emojiFor = p => { const t = norm(p.name + ' ' + p.category); const e = EMO
 function confetti() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const c = document.createElement('canvas'); c.id = 'confetti'; c.width = innerWidth; c.height = innerHeight; document.body.appendChild(c);
-  const g = c.getContext('2d'); const cols = ['#ff5cb8', '#ffd23f', '#3dffa0', '#18c8ff', '#a259ff', '#ff9f1c'];
+  const g = c.getContext('2d'); const cols = ['#6d4aff', '#9d86ff', '#19d3a2', '#ff6a3d', '#ffffff'];
   const ps = Array.from({ length: 110 }, () => ({ x: innerWidth * (0.3 + Math.random() * 0.4), y: innerHeight * 0.55, vx: (Math.random() - .5) * 16, vy: -8 - Math.random() * 13, s: 6 + Math.random() * 8, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
   let f = 0;
   (function tick() {
@@ -175,7 +177,7 @@ function renderResults() {
   $('#resultsTitle').textContent = q.trim() ? `Resultados (${list.length})` : 'Productos';
   $('#results').innerHTML = list.length ? list.map(p => {
     const low = p.stock != null && p.stock <= (p.minStock || 0);
-    return `<button class="pcard ${p.stock === 0 ? 'out' : ''}" data-id="${p.id}"><span class="em">${emojiFor(p)}</span><div class="n">${esc(p.name)}</div><div class="p">${p.askPrice ? 'Monto libre' : money(p.price)}</div>
+    return `<button class="pcard c${[...p.category].reduce((a, c) => a + c.charCodeAt(0), 0) % 3} ${p.stock === 0 ? 'out' : ''}" data-id="${p.id}"><span class="em">${esc(p.name.trim()[0].toUpperCase())}</span><div class="n">${esc(p.name)}</div><div class="p">${p.askPrice ? 'Monto libre' : money(p.price)}</div>
     <div class="m">${esc(p.category)} · ${esc(p.code)}${p.stock != null ? ` · <span style="color:var(${p.stock === 0 ? '--bad' : low ? '--warn' : '--muted'})">${p.stock === 0 ? 'AGOTADO' : 'Stock ' + nfmt.format(p.stock)}</span>` : ''}</div></button>`;
   }).join('') : '<div class="empty" style="grid-column:1/-1">Sin resultados</div>';
 }
