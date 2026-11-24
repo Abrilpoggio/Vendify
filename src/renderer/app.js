@@ -91,10 +91,28 @@ async function startApp() {
 async function loadProducts() { S.products = await call('products:list'); renderQuick(); }
 
 /* ===== Tema ===== */
-const THEMES = ['theme-dark', 'theme-contrast', 'theme-light'];
-function applyTheme(t) { document.body.classList.remove(...THEMES); document.body.classList.add(t); localStorage.setItem('theme', t); if (S.admin) renderAdmin(); }
-applyTheme(localStorage.getItem('theme') || 'theme-dark');
+const THEMES = ['theme-fun', 'theme-dark', 'theme-contrast', 'theme-light'];
+function applyTheme(t) { document.body.classList.remove(...THEMES); document.body.classList.add(t); localStorage.setItem('theme2', t); if (S.admin) renderAdmin(); }
+applyTheme(THEMES.includes(localStorage.getItem('theme2')) ? localStorage.getItem('theme2') : 'theme-fun');
 $('#btnTheme').addEventListener('click', () => { const cur = THEMES.findIndex(t => document.body.classList.contains(t)); applyTheme(THEMES[(cur + 1) % THEMES.length]); });
+
+/* ===== Emojis y confetti (tema divertido) ===== */
+const EMO = [[/caramel|chicle|chupet|golos|turr|pastill/, '🍬'], [/pan\b/, '🥖'], [/bolsa/, '🛍️'], [/hielo/, '🧊'], [/carga/, '📲'], [/alfajor|chocolate|milka/, '🍫'],
+  [/galletit|oreo|pepitos|criollit|express|rumba/, '🍪'], [/coca|sprite|fanta|gaseos|powerade|bebida/, '🥤'], [/agua/, '💧'], [/cerveza/, '🍺'], [/jugo|cepita/, '🧃'],
+  [/papas|lays|doritos|palitos|mani|snack/, '🍿'], [/cigarr|marlboro|lucky/, '🚬'], [/encendedor/, '🔥'], [/pila/, '🔋'], [/pañuelo/, '🤧']];
+const emojiFor = p => { const t = norm(p.name + ' ' + p.category); const e = EMO.find(x => x[0].test(t)); return e ? e[1] : '⭐'; };
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = document.createElement('canvas'); c.id = 'confetti'; c.width = innerWidth; c.height = innerHeight; document.body.appendChild(c);
+  const g = c.getContext('2d'); const cols = ['#ff5cb8', '#ffd23f', '#3dffa0', '#18c8ff', '#a259ff', '#ff9f1c'];
+  const ps = Array.from({ length: 110 }, () => ({ x: innerWidth * (0.3 + Math.random() * 0.4), y: innerHeight * 0.55, vx: (Math.random() - .5) * 16, vy: -8 - Math.random() * 13, s: 6 + Math.random() * 8, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+  let f = 0;
+  (function tick() {
+    g.clearRect(0, 0, c.width, c.height);
+    ps.forEach(p => { p.vy += .45; p.x += p.vx; p.y += p.vy; p.r += p.vr; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); g.restore(); });
+    if (++f < 110) requestAnimationFrame(tick); else c.remove();
+  })();
+}
 
 /* ===== Carrito ===== */
 const cartTotal = () => S.cart.reduce((s, l) => s + l.qty * l.price, 0);
@@ -103,7 +121,7 @@ function addProduct(p, price) {
   const unit = p.askPrice ? price : p.price;
   const ex = S.cart.find(l => l.pid === p.id && l.price === unit);
   if (p.stock != null && p.stock <= 0) toast(`⚠ ${p.name}: sin stock registrado`, 'warn');
-  if (ex) ex.qty++; else S.cart.push({ key: Math.random().toString(36).slice(2), pid: p.id, name: p.name, price: unit, qty: 1, askPrice: p.askPrice });
+  if (ex) ex.qty++; else S.cart.push({ key: Math.random().toString(36).slice(2), pid: p.id, name: p.name, price: unit, qty: 1, askPrice: p.askPrice, fresh: true });
   beep(); renderCart();
 }
 async function askPriceFor(p) {
@@ -115,16 +133,18 @@ async function addFree() {
     { name: 'price', label: 'Monto ($)', type: 'number', step: 'any', big: true, required: true },
     { name: 'name', label: 'Descripción (opcional)', value: 'Varios' }], ok: 'Agregar' });
   const v = r && pnum(r.price);
-  if (v > 0) { S.cart.push({ key: Math.random().toString(36).slice(2), pid: null, name: (r.name || 'Varios').trim() || 'Varios', price: v, qty: 1 }); beep(); renderCart(); }
+  if (v > 0) { S.cart.push({ key: Math.random().toString(36).slice(2), pid: null, name: (r.name || 'Varios').trim() || 'Varios', price: v, qty: 1, fresh: true }); beep(); renderCart(); }
 }
 function renderCart() {
   const el = $('#cart');
-  el.innerHTML = S.cart.length ? S.cart.map(l => `<div class="line" data-k="${l.key}">
+  el.innerHTML = S.cart.length ? S.cart.map(l => `<div class="line${l.fresh ? ' new' : ''}" data-k="${l.key}">
     <div><div class="nm">${esc(l.name)}</div><div class="un">${money(l.price)} c/u</div></div>
     <div class="qty"><button data-a="dec">−</button><span>${nfmt.format(l.qty)}</span><button data-a="inc">+</button></div>
     <div style="display:flex;align-items:center;gap:4px"><div class="sub">${money(l.qty * l.price)}</div><button class="del" data-a="del" title="Quitar">✕</button></div></div>`).join('')
     : '<div class="empty">Escaneá un producto o elegí uno para empezar</div>';
-  $('#total').textContent = money(cartTotal());
+  S.cart.forEach(l => delete l.fresh);
+  const tt = $('#total'), nt = money(cartTotal());
+  if (tt.textContent !== nt) { tt.textContent = nt; tt.classList.remove('bump'); void tt.offsetWidth; tt.classList.add('bump'); }
   el.scrollTop = el.scrollHeight;
 }
 $('#cart').addEventListener('click', e => {
@@ -140,7 +160,7 @@ $('#btnClear').addEventListener('click', () => { S.cart = []; renderCart(); $('#
 /* ===== Productos: acceso rápido + búsqueda ===== */
 function renderQuick() {
   $('#quick').innerHTML = S.products.filter(p => p.quick).map(p =>
-    `<button class="qbtn" data-id="${p.id}">${esc(p.name)}<small>${p.askPrice ? 'Ingresar monto' : money(p.price)}</small></button>`).join('')
+    `<button class="qbtn" data-id="${p.id}"><span class="em">${emojiFor(p)}</span>${esc(p.name)}<small>${p.askPrice ? 'Ingresar monto' : money(p.price)}</small></button>`).join('')
     + '<button class="qbtn free" id="qFree">✏️ Monto libre / Varios<small>F8</small></button>';
   $('#qFree').addEventListener('click', addFree);
 }
@@ -155,7 +175,7 @@ function renderResults() {
   $('#resultsTitle').textContent = q.trim() ? `Resultados (${list.length})` : 'Productos';
   $('#results').innerHTML = list.length ? list.map(p => {
     const low = p.stock != null && p.stock <= (p.minStock || 0);
-    return `<button class="pcard ${p.stock === 0 ? 'out' : ''}" data-id="${p.id}"><div class="n">${esc(p.name)}</div><div class="p">${p.askPrice ? 'Monto libre' : money(p.price)}</div>
+    return `<button class="pcard ${p.stock === 0 ? 'out' : ''}" data-id="${p.id}"><span class="em">${emojiFor(p)}</span><div class="n">${esc(p.name)}</div><div class="p">${p.askPrice ? 'Monto libre' : money(p.price)}</div>
     <div class="m">${esc(p.category)} · ${esc(p.code)}${p.stock != null ? ` · <span style="color:var(${p.stock === 0 ? '--bad' : low ? '--warn' : '--muted'})">${p.stock === 0 ? 'AGOTADO' : 'Stock ' + nfmt.format(p.stock)}</span>` : ''}</div></button>`;
   }).join('') : '<div class="empty" style="grid-column:1/-1">Sin resultados</div>';
 }
@@ -235,7 +255,7 @@ async function finishSale(method, paid, m) {
   if (paying) return; paying = true;
   try {
     const sale = await call('sale:create', { items: S.cart.map(l => ({ pid: l.pid, name: l.name, price: l.price, qty: l.qty })), method, paid: paid == null ? '' : paid });
-    m.close(); S.cart = []; renderCart(); beep(1200, .12);
+    m.close(); S.cart = []; renderCart(); beep(1200, .12); confetti();
     toast(`✔ Venta #${sale.id} · ${money(sale.total)}${method === 'cash' && sale.change ? ' · Vuelto ' + money(sale.change) : ''}`, 'ok', 3500);
     await loadProducts(); renderResults(); $('#search').value = ''; $('#search').focus();
   } catch (e) { toast(e.message, 'err', 4000); } finally { paying = false; }
